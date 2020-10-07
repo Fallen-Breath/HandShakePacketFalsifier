@@ -33,6 +33,6 @@ Config file (config.json):
 
 `target` is the address of the destination server
 
-`fake` is the address you want to customize inside the HandShake packet
+`fake` is the address you want to customize inside the HandShake packet. If you want to avoid the address detection of Hypixel you need to set it to `mc.hypixel.net` and `25565`
 
-For the example config file, client will connects to `127.0.0.1:10000`, and the script will forward the connection to `my.mc.server:20000`, and the address inside the HandShake packet will be modified to `fake.server.address:25565`
+For the example config file, client will connect to `127.0.0.1:10000`, and the script will forward the connection to `my.mc.server:20000`, and the address inside the HandShake packet will be modified to `fake.server.address:25565`
