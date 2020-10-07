@@ -23,14 +23,14 @@ class Address:
 		"""
 		:param data: a dict with format {address: 'xxx', port: 123}
 		"""
-		self.address = data['hostname']
+		self.hostname = data['hostname']
 		self.port = data['port']
 
 	def to_tuple(self):
-		return self.address, self.port
+		return self.hostname, self.port
 
 	def __str__(self):
-		return '{}:{}'.format(self.address, self.port)
+		return '{}:{}'.format(self.hostname, self.port)
 
 
 class Config:
@@ -146,14 +146,22 @@ class Connection(threading.Thread):
 				port = UnsignedShort.read(packet_in, read_data)
 				next_state = VarInt.read(packet_in, read_data)
 				assert len(read_data.getvalue()) == length
+
+				# forge client thing
 				fake_addr = self.forwarder.config.fake_addr
+				pos = address.find('\00')
+				address_extra = address[pos:] if pos != -1 else ''
+				if address_extra:
+					self.log('Address suffix = "{}"'.format(address_extra))
+				processed_hostname = fake_addr.hostname + address_extra
+
 				pack_out = BytesIO()
 				VarInt.send(packet_id, pack_out)
 				VarInt.send(protocol, pack_out)
-				String.send(fake_addr.address, pack_out)
+				String.send(processed_hostname, pack_out)
 				UnsignedShort.send(fake_addr.port, pack_out)
 				VarInt.send(next_state, pack_out)
-				self.log('Converted address {}:{} to {} in HandShakePacket'.format(address, port, fake_addr))
+				self.log('Converted address "{}:{}" to "{}:{}" in HandShakePacket'.format(address, port, processed_hostname, fake_addr.port))
 				return pack_out
 		except Exception as e:
 			self.log('Convert fail:', e)
