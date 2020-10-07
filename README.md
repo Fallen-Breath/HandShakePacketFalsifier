@@ -8,7 +8,7 @@ First, it will try to detect the potential HandShake packet during the connectio
 
 ## Usage
 
-Fill the config file, and then use `python FakeHandShakePacketAddress.py` to start
+Fill the config file, and then use `python HandShakePacketFalsifier.py` to start
 
 Config file (config.json):
 
