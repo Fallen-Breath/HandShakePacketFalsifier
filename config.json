@@ -1,14 +1,14 @@
 {
 	"listen": {
 		"hostname": "127.0.0.1",
-		"port": 10000
+		"port": 15565
 	},
 	"target": {
-		"hostname": "my.mc.server:20000",
+		"hostname": "localhost",
 		"port": 20000
 	},
 	"fake": {
-		"hostname": "fake.server.address",
+		"hostname": "mc.hypixel.net",
 		"port": 25565
 	}
 }
