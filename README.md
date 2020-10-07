@@ -1,4 +1,4 @@
-# Fake HandShakePacket Address
+# HandShakePacket Falsifier
 
 A script to falsify the hostname and the port data inside Minecraft HandShake packet
 
