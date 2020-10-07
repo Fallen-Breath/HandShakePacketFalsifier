@@ -1,6 +1,6 @@
 # HandShakePacket Falsifier
 
-A script to falsify the hostname and the port data inside Minecraft HandShake packet
+A script to falsify the hostname and the port data in the Minecraft HandShake packet
 
 It works like a tcp connection forwarder
 
@@ -19,7 +19,7 @@ Config file (config.json):
 		"port": 10000
 	},
 	"target": {
-		"hostname": "my.mc.server:20000",
+		"hostname": "my.mc.server",
 		"port": 20000
 	},
 	"fake": {
