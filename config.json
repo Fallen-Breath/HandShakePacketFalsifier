@@ -1,0 +1,14 @@
+{
+	"listen": {
+		"hostname": "127.0.0.1",
+		"port": 10000
+	},
+	"target": {
+		"hostname": "my.mc.server:20000",
+		"port": 20000
+	},
+	"fake": {
+		"hostname": "fake.server.address",
+		"port": 25565
+	}
+}
