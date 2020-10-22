@@ -3,6 +3,7 @@ import select
 import struct
 import threading
 import time
+import traceback
 from io import BytesIO
 from socket import socket
 
@@ -62,6 +63,10 @@ class ConnectionForwarder:
 				connection = Connection(self, conn)
 				print('New connection (id {}) from {}:{}'.format(connection.cid, *addr))
 				connection.start()
+		except KeyboardInterrupt:
+			print('Keyboard Interrupted')
+		except:
+			traceback.print_exc()
 		finally:
 			sock.close()
 
