@@ -19,7 +19,6 @@ def logging(name, *args):
 
 
 def forward(source: socket, target: socket):
-	source.settimeout(TIMEOUT_FOR_FORWARD)
 	while True:
 		data = source.recv(1024)
 		if not data:
@@ -109,7 +108,9 @@ class Connection(threading.Thread):
 	def run(self):
 		target_addr = self.forwarder.config.target_addr
 		self.log('Connecting to {}'.format(target_addr))
+		self.conn.settimeout(TIMEOUT_FOR_FORWARD)
 		self.target_sock.connect(target_addr.to_tuple())
+		self.target_sock.settimeout(TIMEOUT_FOR_FORWARD)
 		pipe_backwards = Pipe(self, self.target_sock, self.conn)
 		pipe_backwards.start()  # target -> conn
 		self.log('Backwards pipe started')
@@ -140,7 +141,12 @@ class Connection(threading.Thread):
 				packet_in.write(stream.read(length))
 				# Ensure we read all the packet
 				while len(packet_in.getvalue()) < length:
-					packet_in.write(stream.read(length - len(packet_in.getvalue())))
+					data = stream.read(length - len(packet_in.getvalue()))
+					if not data:
+						break
+					packet_in.write(data)
+				if len(packet_in.getvalue()) < length:
+					break
 				packet_in.seek(0)
 				packet_in_copy = BytesIO(packet_in.getvalue())
 				self.log('packet (length {} {}) data: {}'.format(length, length_data.getvalue(), packet_in.getvalue()))
