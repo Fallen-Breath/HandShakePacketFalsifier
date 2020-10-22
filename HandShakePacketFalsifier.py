@@ -121,11 +121,11 @@ class Connection(threading.Thread):
 		try:
 			stream = self.conn.makefile('rb', 0)
 			while not convert_success and not self.closed:
+				if time.time() - time_start > TIMEOUT_FOR_HANDSHAKEPACKET:
+					self.log('{}s time limit for waiting HandShakePacket exceeded'.format(TIMEOUT_FOR_HANDSHAKEPACKET))
+					break
 				ready_to_read = select.select([stream], [], [], 0.05)[0]
 				if not ready_to_read:
-					if time.time() - time_start > TIMEOUT_FOR_HANDSHAKEPACKET:
-						self.log('{}s time limit for waiting HandShakePacket exceeded'.format(TIMEOUT_FOR_HANDSHAKEPACKET))
-						break
 					continue
 
 				length_data = BytesIO()
