@@ -10,6 +10,11 @@ from socket import socket
 
 CONFIG_FILE = 'config.json'
 HAND_SHAKE_PACKET_ID = 0x00
+TIMEOUT_FOR_HANDSHAKEPACKET = 20
+
+
+def logging(name, *args):
+	print('[{}] [{}]'.format(time.strftime('%Y-%m-%d %H:%M:%S'), name), *args)
 
 
 def forward(source: socket, target: socket):
@@ -51,24 +56,36 @@ class ConnectionForwarder:
 	def __init__(self, config_file):
 		self.config = Config(config_file)
 
+	@staticmethod
+	def log(*args):
+		logging('Forwarder', *args)
+
 	def run(self):
 		sock = socket()
 		listen_addr = self.config.listen_addr
 		sock.bind(listen_addr.to_tuple())
-		print('blind', listen_addr)
+		self.log('blind', listen_addr)
 		try:
 			sock.listen(5)
+			connections = []
 			while True:
 				conn, addr = sock.accept()
 				connection = Connection(self, conn)
-				print('New connection (id {}) from {}:{}'.format(connection.cid, *addr))
+				self.log('New connection (id {}) from {}:{}'.format(connection.cid, *addr))
 				connection.start()
+				connections.append(connection)
+				for connection in connections.copy():
+					if not connection.is_alive():
+						connections.remove(connection)
+				time.sleep(0.1)
+				self.log('Existed connection ids: {}'.format(', '.join([str(c.cid) for c in connections])))
 		except KeyboardInterrupt:
-			print('Keyboard Interrupted')
+			self.log('Keyboard Interrupted')
 		except:
 			traceback.print_exc()
 		finally:
 			sock.close()
+			self.log('bye')
 
 
 class Connection(threading.Thread):
@@ -85,12 +102,15 @@ class Connection(threading.Thread):
 		Connection.id_counter += 1
 
 	def log(self, *args):
-		print('[Connection{}]'.format(self.cid), *args)
+		logging('Connection{}'.format(self.cid), *args)
 
 	def run(self):
-		self.target_sock.connect(self.forwarder.config.target_addr.to_tuple())
+		target_addr = self.forwarder.config.target_addr
+		self.log('Connecting to {}'.format(target_addr))
+		self.target_sock.connect(target_addr.to_tuple())
 		pipe_backwards = Pipe(self, self.target_sock, self.conn)
 		pipe_backwards.start()  # target -> conn
+		self.log('Backwards pipe started')
 
 		# conn -> target, needs filtering
 
@@ -101,7 +121,8 @@ class Connection(threading.Thread):
 			while not convert_success and not self.closed:
 				ready_to_read = select.select([stream], [], [], 0.05)[0]
 				if not ready_to_read:
-					if time.time() - time_start > 60:
+					if time.time() - time_start > TIMEOUT_FOR_HANDSHAKEPACKET:
+						self.log('{}s time limit for waiting HandShakePacket exceeded'.format(TIMEOUT_FOR_HANDSHAKEPACKET))
 						break
 					continue
 
@@ -140,10 +161,11 @@ class Connection(threading.Thread):
 				forward(self.conn, self.target_sock)
 		except Exception as e:
 			self.log('Connection closed:', e)
+		else:
+			self.log('Connection closed')
 		finally:
 			self.conn.close()
 			self.target_sock.close()
-			self.log('Connection closed')
 
 	def try_convert(self, length, packet_in):
 		try:
