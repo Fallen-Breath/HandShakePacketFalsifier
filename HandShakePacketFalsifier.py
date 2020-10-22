@@ -2,6 +2,7 @@ import json
 import select
 import struct
 import threading
+import time
 from io import BytesIO
 from socket import socket
 
@@ -58,8 +59,8 @@ class ConnectionForwarder:
 			sock.listen(5)
 			while True:
 				conn, addr = sock.accept()
-				print('New connection from {}:{}'.format(*addr))
 				connection = Connection(self, conn)
+				print('New connection (id {}) from {}:{}'.format(connection.cid, *addr))
 				connection.start()
 		finally:
 			sock.close()
@@ -89,11 +90,14 @@ class Connection(threading.Thread):
 		# conn -> target, needs filtering
 
 		convert_success = False
+		time_start = time.time()
 		try:
 			stream = self.conn.makefile('rb', 0)
 			while not convert_success and not self.closed:
 				ready_to_read = select.select([stream], [], [], 0.05)[0]
 				if not ready_to_read:
+					if time.time() - time_start > 60:
+						break
 					continue
 
 				length_data = BytesIO()
@@ -126,7 +130,7 @@ class Connection(threading.Thread):
 
 			if self.closed:
 				return
-			else:
+			elif convert_success:
 				self.log('Convert success, switching to directly forward mode')
 				forward(self.conn, self.target_sock)
 		except Exception as e:
@@ -134,6 +138,7 @@ class Connection(threading.Thread):
 		finally:
 			self.conn.close()
 			self.target_sock.close()
+			self.log('Connection closed')
 
 	def try_convert(self, length, packet_in):
 		try:
