@@ -11,6 +11,7 @@ from socket import socket
 CONFIG_FILE = 'config.json'
 HAND_SHAKE_PACKET_ID = 0x00
 TIMEOUT_FOR_HANDSHAKEPACKET = 20
+TIMEOUT_FOR_FORWARD = 60
 
 
 def logging(name, *args):
@@ -18,6 +19,7 @@ def logging(name, *args):
 
 
 def forward(source: socket, target: socket):
+	source.settimeout(TIMEOUT_FOR_FORWARD)
 	while True:
 		data = source.recv(1024)
 		if not data:
